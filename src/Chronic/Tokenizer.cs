@@ -45,7 +45,7 @@ namespace Chronic
 
         public static string Normalize(string phrase)
         {
-            var normalized = phrase.ToLower();
+            var normalized = phrase.ClearUnusedSymbols().ToStringWithEnglishNumbers().ToLower();
             normalized = normalized
                 .ReplaceAll(@"([/\-,@])", " " + "$1" + " ")
                 .ReplaceAll(@"['""\.,]", "")

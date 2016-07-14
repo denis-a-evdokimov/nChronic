@@ -26,7 +26,7 @@ namespace Chronic
                 }
                 catch (CultureNotFoundException)
                 {
-                    _locale = string.Empty;
+                    _locale = CultureInfo.CurrentCulture.IetfLanguageTag;
                     return;
                 }
 

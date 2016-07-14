@@ -31,5 +31,12 @@ namespace Chronic.Tests
             var parsed = Parse("miércoles, 22 de junio de 2016", "es");
             parsed.AssertStartsAt(Time.New(2016, 6, 22));
         }
+
+        [Fact]
+        public void StringContainNonEnglishNumbers_Arabic()
+        {
+            var parsed = Parse("نشر بتاريخ ١٣‏/٧‏/٢٠١٦ ٥:١٤ م");
+            parsed.AssertStartsAt(Time.New(2016, 07, 13, 17, 14, 0));
+        }
     }
 }

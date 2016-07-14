@@ -41,31 +41,28 @@ namespace Chronic.Tags.Repeaters
 
         static ITag ScanUnits(Token token, Options options)
         {
-            ITag tag = null;
-            UnitPatterns.ForEach(item =>
+            foreach (var item in UnitPatterns)
             {
                 if (item.Pattern.IsMatch(token.Value))
                 {
                     var type = (Type)item.Unit;
                     var hasCtorWithOptions = type.GetConstructors().Any(ctor =>
-                    {
-                        var parameters = ctor.GetParameters().ToArray();
-                        return
-                            parameters.Length == 1
-                            && parameters.First().ParameterType == typeof(Options);
-                    });
+                        {
+                            var parameters = ctor.GetParameters().ToArray();
+                            return
+                                parameters.Length == 1
+                                && parameters.First().ParameterType == typeof(Options);
+                        });
                     var ctorParameters = hasCtorWithOptions
-                        ? new[] { options }
-                        : new object[0];
+                                             ? new[] { options }
+                                             : new object[0];
 
-                    tag = Activator.CreateInstance(
+                    return Activator.CreateInstance(
                         type,
                         ctorParameters) as ITag;
-
-                    return;
                 }
-            });
-            return tag;
+            }
+            return null;
         }
 
         static ITag ScanTimes(Token token, Options options)
@@ -80,22 +77,19 @@ namespace Chronic.Tags.Repeaters
 
         static ITag ScanDayPortions(Token token, Options options)
         {
-            ITag tag = null;
-            DayPortionPatterns.ForEach(item =>
+            foreach (var item in DayPortionPatterns)
+            {
+                if (item.Pattern.IsMatch(token.Value))
                 {
-                    if (item.Pattern.IsMatch(token.Value))
-                    {
-                        tag = new EnumRepeaterDayPortion(item.Portion);
-                        return;
-                    }
-                });
-            return tag;
+                    return new EnumRepeaterDayPortion(item.Portion);
+                }
+            }
+            return null;
         }
 
-        static ITag ScanDayNames(Token token, Options options)
+        private static ITag ScanDayNames(Token token, Options options)
         {
-            ITag tag = null;
-            foreach (var item in DayPatterns)
+            foreach (var item in GetDayOfWeekPatterns(options))
             {
                 if (item.Pattern.IsMatch(token.Value))
                 {
@@ -103,22 +97,32 @@ namespace Chronic.Tags.Repeaters
                 }
             }
 
-            // next search in localized days
-            foreach (var item in CulturesPatterns.GetCultureItem(options.Locale).DayOfWeekPatterns)
+            return null;
+        }
+
+        /// <summary>
+        /// Return day of week patterns for matching.
+        /// First return localized patterns.
+        /// Next - default hardcoded patterns.
+        /// </summary>
+        /// <param name="options">Parsing options</param>
+        /// <returns>Day of week patterns</returns>
+        private static IEnumerable<DayOfWeekPattern> GetDayOfWeekPatterns(Options options)
+        {
+            foreach (var pattern in CulturesPatterns.GetCultureItem(options.Locale).DayOfWeekPatterns)
             {
-                if (item.Pattern.IsMatch(token.Value))
-                {
-                    return new RepeaterDayName(item.Day);
-                }
+                yield return pattern;
             }
 
-            return tag;
+            foreach (var pattern in DayPatterns)
+            {
+                yield return pattern;
+            }
         }
 
         static ITag ScanMonthNames(Token token, Options options)
         {
-            ITag tag = null;
-            foreach (var item in MonthPatterns)
+            foreach (var item in GetMonthsPatterns(options))
             {
                 if (item.Pattern.IsMatch(token.Value))
                 {
@@ -126,16 +130,27 @@ namespace Chronic.Tags.Repeaters
                 }
             }
 
-            // next search in localized months
-            foreach (var item in CulturesPatterns.GetCultureItem(options.Locale).MonthPatterns)
+            return null;
+        }
+
+        /// <summary>
+        /// Return month patterns for matching.
+        /// First return localized patterns.
+        /// Next - default hardcoded patterns.
+        /// </summary>
+        /// <param name="options">Parsing options</param>
+        /// <returns>Month patterns</returns>
+        private static IEnumerable<MonthPattern> GetMonthsPatterns(Options options)
+        {
+            foreach (var pattern in CulturesPatterns.GetCultureItem(options.Locale).MonthPatterns)
             {
-                if (item.Pattern.IsMatch(token.Value))
-                {
-                    return new RepeaterMonthName(item.Month);
-                }
+                yield return pattern;
             }
 
-            return tag;
+            foreach (var pattern in MonthPatterns)
+            {
+                yield return pattern;
+            }
         }
 
         static ITag ScanSeasonNames(Token token, Options options)
